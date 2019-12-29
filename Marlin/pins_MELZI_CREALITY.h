@@ -69,9 +69,6 @@
   #define DOGLCD_CS        LCD_PINS_RS
 #endif
 
-// BLTouch mappings: (Creality 3D)
-#define SERVO0_PIN      29
-//#define BEEPER_PIN      -1
 
 
 /**

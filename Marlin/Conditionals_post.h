@@ -1420,4 +1420,10 @@
   #define NUM_AXIS XYZE
 #endif
 
+//Disable BEEPER for BLTouch if using same pin
+#if ENABLED(BEEPER_DISABLE)
+	#undef BEEPER_PIN
+	#define BEEPER_PIN	-1
+#endif
+
 #endif // CONDITIONALS_POST_H
