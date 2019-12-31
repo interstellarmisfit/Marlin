@@ -452,8 +452,8 @@
   //#define BLTOUCH_LCD_VOLTAGE_MENU
 
 	//BLTouch Servo pin
-	#define SERVO0_PIN 29
-	//#define BEEPER_DISABLE
+	#define SERVO0_PIN 27
+	#define BEEPER_DISABLE
 
 #endif // BLTOUCH
 
