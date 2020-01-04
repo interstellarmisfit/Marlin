@@ -512,9 +512,10 @@
 //
 // Use Junction Deviation instead of traditional Jerk Limiting
 //
-//#define JUNCTION_DEVIATION
+#define JUNCTION_DEVIATION
 #if ENABLED(JUNCTION_DEVIATION)
-  #define JUNCTION_DEVIATION_MM 0.02  // (mm) Distance from real junction edge
+  //#define JUNCTION_DEVIATION_MM 0.08  // (mm) Distance from real junction edge
+  #define JUNCTION_DEVIATION_MM (.4 * DEFAULT_XJERK * DEFAULT_XJERK / DEFAULT_ACCELERATION)
 #endif
 
 /**
@@ -936,23 +937,30 @@
 #if ENABLED(SDSUPPORT)
   #define BLOCK_BUFFER_SIZE 16 // SD,LCD,Buttons take more memory, block buffer needs to be smaller
 #else
-  #define BLOCK_BUFFER_SIZE 16 // maximize block buffer
+  #define BLOCK_BUFFER_SIZE 64 // maximize block buffer
 #endif
 
 // @section serial
 
-// The ASCII buffer for serial input
-#define MAX_CMD_SIZE 96
-#define BUFSIZE 4
-
-// Transmission to Host Buffer Size
-// To save 386 bytes of PROGMEM (and TX_BUFFER_SIZE+3 bytes of RAM) set to 0.
-// To buffer a simple "ok" you need 4 bytes.
-// For ADVANCED_OK (M105) you need 32 bytes.
-// For debug-echo: 128 bytes for the optimal speed.
-// Other output doesn't need to be that speedy.
-// :[0, 2, 4, 8, 16, 32, 64, 128, 256]
-#define TX_BUFFER_SIZE 0
+#if ENABLED(OCTOPRINT_OPTIMIZE)
+	// The ASCII buffer for serial input
+	#define MAX_CMD_SIZE 96
+	#define BUFSIZE 32
+	
+	// Transmission to Host Buffer Size
+	// To save 386 bytes of PROGMEM (and TX_BUFFER_SIZE+3 bytes of RAM) set to 0.
+	// To buffer a simple "ok" you need 4 bytes.
+	// For ADVANCED_OK (M105) you need 32 bytes.
+	// For debug-echo: 128 bytes for the optimal speed.
+	// Other output doesn't need to be that speedy.
+	// :[0, 2, 4, 8, 16, 32, 64, 128, 256]
+	#define TX_BUFFER_SIZE 32
+	
+#else
+	#define MAX_CMD_SIZE 96
+	#define BUFSIZE 4
+	#define TX_BUFFER_SIZE 0
+#endif
 
 // Host Receive Buffer Size
 // Without XON/XOFF flow control (see SERIAL_XON_XOFF below) 32 bytes should be enough.
@@ -1547,7 +1555,7 @@
 /**
  * User-defined menu items that execute custom GCode
  */
-#define CUSTOM_USER_MENUS
+//#define CUSTOM_USER_MENUS
 #if ENABLED(CUSTOM_USER_MENUS)
   //#define USER_SCRIPT_DONE "M117 User Script Done"
   //#define USER_SCRIPT_AUDIBLE_FEEDBACK
