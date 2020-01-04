@@ -397,9 +397,14 @@
   // If you are using a pre-configured hotend then you can use one of the value sets by uncommenting it
 
   // Stock CR-10S Hotend fan 100%
-  #define  DEFAULT_Kp 20.84
-  #define  DEFAULT_Ki 1.96
-  #define  DEFAULT_Kd 55.47
+  //#define  DEFAULT_Kp 20.84
+  //#define  DEFAULT_Ki 1.96
+  //#define  DEFAULT_Kd 55.47
+  
+  // Creality Ender-3
+  #define DEFAULT_Kp 21.73
+  #define DEFAULT_Ki 1.54
+  #define DEFAULT_Kd 76.55
 
   // Ultimaker
   //#define DEFAULT_Kp 22.2
