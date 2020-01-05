@@ -18,7 +18,9 @@ This branch is based on the official Marlin bugfix-1.1.x. The configration has b
 
 I am using this firmware build on my personal Ender 3. It is working extremly well with great print quality.
 
-It is configured with full menus, BLTouch and BiLinear leveling, S-Curve acceleration and Junction Deviation.
+It is configured with full menus, BLTouch and BiLinear leveling.
+
+I've disabled S-Curve acceleration and Junction Deviation in the config. I started having some layer shifting. You can enable and try these new features if you want.
 
 I have included an option to optimize the configuration for printing from Octoprint.
 
@@ -64,8 +66,7 @@ I tried to fit as many useful features into the small amount of memory that I co
     LCD_SET_PROGRESS_MANUALLY: Add M73 to set progress. Disable if you don't print through serial port.
     BABYSTEPPING: Multiplicator 10
     EMERGENCY_PARSER:
-    S_CURVE_ACCELERATION
-    JUNCTION_DEVIATION: With calculated mm from accel and jerk
+
 
 
 ## Disabled Features
@@ -82,7 +83,9 @@ Had to make a few sacrifices to make it all fit.
     AUTOTEMP: Saves 1k.
     ARC_SUPPORT
     NO_WORKSPACE_OFFSETS: Enabled to disable workspace offsets. Save 1700 bytes. 
-
+	S_CURVE_ACCELERATION
+    JUNCTION_DEVIATION: With calculated mm from accel and jerk
+	
 ## Options and their sizes.
 OPTION|PROG BYTES
 :--|--:
