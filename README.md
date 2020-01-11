@@ -20,9 +20,11 @@ I am using this firmware build on my personal Ender 3. It is working extremly we
 
 It is configured with full menus, BLTouch and BiLinear leveling.
 
-I've disabled S-Curve acceleration and Junction Deviation in the config. I started having some layer shifting. You can enable and try these new features if you want.
+S-Curve acceleration and Junction Deviation are disabled in the config. I recommend trying S-Curve. It almost completely eliminates ringing.
 
 I have included an option to optimize the configuration for printing from Octoprint.
+
+HEX files are included.
 
 ## Installation notes
 The firmware is preconfigured and ready to use on an Ender 3 running the stock board. 
@@ -118,7 +120,6 @@ NO_LCD_MENUS|-39038
 ## Recent Changes
 
 ## Credits
-This branch is customized by Alan, the Space Misfit.
 
 Please see the official [Marlin GitHub](https://github.com/MarlinFirmware/Marlin) for a full list of credits.
 
