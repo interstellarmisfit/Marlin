@@ -39,6 +39,11 @@ If you are upgrading from a different version you will have to initialize your E
 
 Homing rates are slowed down to prevent moving past the limit switch and slamming into stops. 
 
+## progisp users
+WARNING!! The fuse values that Creality says to use are wrong. The settings do not match the 16mhz crystal oscillator that is used on the Creality boards. I have verified this against the datasheet for the Atmel chip. 
+
+The correct fuse values, that also get burned if you use an Arduino, are: Low=FF, High=DE, Extended=FD.
+
 ## Non-Standard configuration options.
 I have added a couple of non-standard configuration options to configuration.h.
 
