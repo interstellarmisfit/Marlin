@@ -37,7 +37,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V76"
+#define EEPROM_VERSION "V77"
 #define EEPROM_OFFSET 100
 
 // Check the integrity of data offsets.
@@ -57,7 +57,7 @@
 #include "../MarlinCore.h"
 
 #if EITHER(EEPROM_SETTINGS, SD_FIRMWARE_UPDATE)
-  #include "../HAL/shared/persistent_store_api.h"
+  #include "../HAL/shared/eeprom_api.h"
 #endif
 
 #include "probe.h"
@@ -122,12 +122,22 @@
   #include "../feature/probe_temp_comp.h"
 #endif
 
+#include "../feature/controllerfan.h"
+#if ENABLED(CONTROLLER_FAN_EDITABLE)
+  void M710_report(const bool forReplay);
+#endif
+
+#define HAS_CASE_LIGHT_BRIGHTNESS (ENABLED(CASE_LIGHT_MENU) && DISABLED(CASE_LIGHT_NO_BRIGHTNESS))
+#if HAS_CASE_LIGHT_BRIGHTNESS
+  #include "../feature/caselight.h"
+#endif
+
 #pragma pack(push, 1) // No padding between variables
 
-typedef struct { uint16_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5; } tmc_stepper_current_t;
-typedef struct { uint32_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5; } tmc_hybrid_threshold_t;
-typedef struct {  int16_t X, Y, Z, X2;                                     } tmc_sgt_t;
-typedef struct {     bool X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5; } tmc_stealth_enabled_t;
+typedef struct { uint16_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_stepper_current_t;
+typedef struct { uint32_t X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_hybrid_threshold_t;
+typedef struct {  int16_t X, Y, Z, X2;                                                 } tmc_sgt_t;
+typedef struct {     bool X, Y, Z, X2, Y2, Z2, Z3, Z4, E0, E1, E2, E3, E4, E5, E6, E7; } tmc_stealth_enabled_t;
 
 // Limit an index to an array size
 #define ALIM(I,ARR) _MIN(I, COUNT(ARR) - 1)
@@ -293,6 +303,11 @@ typedef struct SettingsDataStruct {
   int16_t lcd_contrast;                                 // M250 C
 
   //
+  // Controller fan settings
+  //
+  controllerFan_settings_t controllerFan_settings;      // M710
+
+  //
   // POWER_LOSS_RECOVERY
   //
   bool recovery_enabled;                                // M413 S
@@ -366,6 +381,13 @@ typedef struct SettingsDataStruct {
     uint8_t extui_data[ExtUI::eeprom_data_size];
   #endif
 
+  //
+  // HAS_CASE_LIGHT_BRIGHTNESS
+  //
+  #if HAS_CASE_LIGHT_BRIGHTNESS
+    uint8_t case_light_brightness;
+  #endif
+
 } SettingsData;
 
 //static_assert(sizeof(SettingsData) <= E2END + 1, "EEPROM too small to contain SettingsData!");
@@ -429,6 +451,10 @@ void MarlinSettings::postprocess() {
 
   #if HAS_LINEAR_E_JERK
     planner.recalculate_max_e_jerk();
+  #endif
+
+  #if HAS_CASE_LIGHT_BRIGHTNESS
+    update_case_light();
   #endif
 
   // Refresh steps_to_mm with the reciprocal of axis_steps_per_mm
@@ -881,6 +907,19 @@ void MarlinSettings::postprocess() {
     }
 
     //
+    // Controller Fan
+    //
+    {
+      _FIELD_TEST(controllerFan_settings);
+      #if ENABLED(USE_CONTROLLER_FAN)
+        const controllerFan_settings_t &cfs = controllerFan.settings;
+      #else
+        controllerFan_settings_t cfs = controllerFan_defaults;
+      #endif
+      EEPROM_WRITE(cfs);
+    }
+
+    //
     // Power-Loss Recovery
     //
     {
@@ -1208,7 +1247,7 @@ void MarlinSettings::postprocess() {
       #if HAS_MOTOR_CURRENT_PWM
         EEPROM_WRITE(stepper.motor_current_setting);
       #else
-        const xyz_ulong_t no_current{0};
+        const uint32_t no_current[3] = { 0 };
         EEPROM_WRITE(no_current);
       #endif
     }
@@ -1287,6 +1326,13 @@ void MarlinSettings::postprocess() {
     #endif
 
     //
+    // Case Light Brightness
+    //
+    #if HAS_CASE_LIGHT_BRIGHTNESS
+      EEPROM_WRITE(case_light_brightness);
+    #endif
+
+    //
     // Validate CRC and Data Size
     //
     if (!eeprom_error) {
@@ -1314,6 +1360,8 @@ void MarlinSettings::postprocess() {
       if (ubl.storage_slot >= 0)
         store_mesh(ubl.storage_slot);
     #endif
+
+    if (!eeprom_error) LCD_MESSAGEPGM(MSG_SETTINGS_STORED);
 
     #if ENABLED(EXTENSIBLE_UI)
       ExtUI::onConfigurationStoreWritten(!eeprom_error);
@@ -1345,7 +1393,7 @@ void MarlinSettings::postprocess() {
       DEBUG_ECHO_START();
       DEBUG_ECHOLNPAIR("EEPROM version mismatch (EEPROM=", stored_ver, " Marlin=" EEPROM_VERSION ")");
       #if HAS_LCD_MENU && DISABLED(EEPROM_AUTO_INIT)
-        ui.set_status_P(GET_TEXT(MSG_ERR_EEPROM_VERSION));
+        LCD_MESSAGEPGM(MSG_ERR_EEPROM_VERSION);
       #endif
       eeprom_error = true;
     }
@@ -1717,6 +1765,19 @@ void MarlinSettings::postprocess() {
         #if HAS_LCD_CONTRAST
           ui.set_contrast(lcd_contrast);
         #endif
+      }
+
+      //
+      // Controller Fan
+      //
+      {
+        _FIELD_TEST(controllerFan_settings);
+        #if ENABLED(CONTROLLER_FAN_EDITABLE)
+          const controllerFan_settings_t &cfs = controllerFan.settings;
+        #else
+          controllerFan_settings_t cfs = { 0 };
+        #endif
+        EEPROM_READ(cfs);
       }
 
       //
@@ -2127,12 +2188,20 @@ void MarlinSettings::postprocess() {
         }
       #endif
 
+      //
+      // Case Light Brightness
+      //
+      #if HAS_CASE_LIGHT_BRIGHTNESS
+        _FIELD_TEST(case_light_brightness);
+        EEPROM_READ(case_light_brightness);
+      #endif
+
       eeprom_error = size_error(eeprom_index - (EEPROM_OFFSET));
       if (eeprom_error) {
         DEBUG_ECHO_START();
         DEBUG_ECHOLNPAIR("Index: ", int(eeprom_index - (EEPROM_OFFSET)), " Size: ", datasize());
         #if HAS_LCD_MENU && DISABLED(EEPROM_AUTO_INIT)
-          ui.set_status_P(GET_TEXT(MSG_ERR_EEPROM_INDEX));
+          LCD_MESSAGEPGM(MSG_ERR_EEPROM_INDEX);
         #endif
       }
       else if (working_crc != stored_crc) {
@@ -2140,7 +2209,7 @@ void MarlinSettings::postprocess() {
         DEBUG_ERROR_START();
         DEBUG_ECHOLNPAIR("EEPROM CRC mismatch - (stored) ", stored_crc, " != ", working_crc, " (calculated)!");
         #if HAS_LCD_MENU && DISABLED(EEPROM_AUTO_INIT)
-          ui.set_status_P(GET_TEXT(MSG_ERR_EEPROM_CRC));
+          LCD_MESSAGEPGM(MSG_ERR_EEPROM_CRC);
         #endif
       }
       else if (!validating) {
@@ -2423,6 +2492,14 @@ void MarlinSettings::reset() {
   #endif
 
   //
+  // Case Light Brightness
+  //
+
+  #if HAS_CASE_LIGHT_BRIGHTNESS
+    case_light_brightness = CASE_LIGHT_DEFAULT_BRIGHTNESS;
+  #endif
+
+  //
   // Magnetic Parking Extruder
   //
 
@@ -2591,6 +2668,13 @@ void MarlinSettings::reset() {
   #endif
 
   //
+  // Controller Fan
+  //
+  #if ENABLED(USE_CONTROLLER_FAN)
+    controllerFan.reset();
+  #endif
+
+  //
   // Power-Loss Recovery
   //
 
@@ -2653,7 +2737,7 @@ void MarlinSettings::reset() {
 
   #if HAS_MOTOR_CURRENT_PWM
     constexpr uint32_t tmp_motor_current_setting[3] = PWM_MOTOR_CURRENT;
-    for (uint8_t q = 3; q--;)
+    LOOP_L_N(q, 3)
       stepper.digipot_current(q, (stepper.motor_current_setting[q] = tmp_motor_current_setting[q]));
   #endif
 
@@ -3152,6 +3236,10 @@ void MarlinSettings::reset() {
       CONFIG_ECHO_HEADING("LCD Contrast:");
       CONFIG_ECHO_START();
       SERIAL_ECHOLNPAIR("  M250 C", ui.contrast);
+    #endif
+
+    #if ENABLED(CONTROLLER_FAN_EDITABLE)
+      M710_report(forReplay);
     #endif
 
     #if ENABLED(POWER_LOSS_RECOVERY)

@@ -179,8 +179,8 @@ namespace Language_de {
   PROGMEM Language_Str MSG_UBL_STORAGE_SLOT                = _UxGT("Speicherort");
   PROGMEM Language_Str MSG_UBL_LOAD_MESH                   = _UxGT("Bettnetz laden");
   PROGMEM Language_Str MSG_UBL_SAVE_MESH                   = _UxGT("Bettnetz speichern");
-  PROGMEM Language_Str MSG_MESH_LOADED                     = _UxGT("M117 Netz %i geladen");
-  PROGMEM Language_Str MSG_MESH_SAVED                      = _UxGT("M117 Netz %i gespeichert");
+  PROGMEM Language_Str MSG_MESH_LOADED                     = _UxGT("Netz %i geladen");
+  PROGMEM Language_Str MSG_MESH_SAVED                      = _UxGT("Netz %i gespeichert");
   PROGMEM Language_Str MSG_UBL_NO_STORAGE                  = _UxGT("Kein Speicher");
   PROGMEM Language_Str MSG_UBL_SAVE_ERROR                  = _UxGT("Err:UBL speichern");
   PROGMEM Language_Str MSG_UBL_RESTORE_ERROR               = _UxGT("Err:UBL wiederherst.");
@@ -236,6 +236,11 @@ namespace Language_de {
   PROGMEM Language_Str MSG_FAN_SPEED_N                     = _UxGT("Lüfter ~");
   PROGMEM Language_Str MSG_EXTRA_FAN_SPEED                 = _UxGT("Geschw. Extralüfter");
   PROGMEM Language_Str MSG_EXTRA_FAN_SPEED_N               = _UxGT("Geschw. Extralüfter ~");
+  PROGMEM Language_Str MSG_CONTROLLER_FAN                  = _UxGT("Lüfter Kontroller");
+  PROGMEM Language_Str MSG_CONTROLLER_FAN_IDLE_SPEED       = _UxGT("Lüfter Leerlauf");
+  PROGMEM Language_Str MSG_CONTROLLER_FAN_AUTO_ON          = _UxGT("Motorlast Modus");
+  PROGMEM Language_Str MSG_CONTROLLER_FAN_SPEED            = _UxGT("Lüfter Motorlast");
+  PROGMEM Language_Str MSG_CONTROLLER_FAN_DURATION         = _UxGT("Ausschalt Delay");
   PROGMEM Language_Str MSG_FLOW                            = _UxGT("Flussrate");
   PROGMEM Language_Str MSG_FLOW_N                          = _UxGT("Flussrate ~");
   PROGMEM Language_Str MSG_CONTROL                         = _UxGT("Einstellungen");
@@ -518,7 +523,7 @@ namespace Language_de {
   //                                       ...oder 2 Zeilen auf einem 3-Zeilen-Display.
   #if LCD_HEIGHT >= 4
     PROGMEM Language_Str MSG_ADVANCED_PAUSE_WAITING        = _UxGT(MSG_2_LINE("Knopf drücken um", "Druck fortzusetzen"));
-    PROGMEM Language_Str MSG_PAUSE_PRINT_INIT              = _UxGT(MSG_2_LINE("Druck ist", "pausiert..."));
+    PROGMEM Language_Str MSG_PAUSE_PRINT_PARKING           = _UxGT(MSG_2_LINE("Druck ist", "pausiert..."));
     PROGMEM Language_Str MSG_FILAMENT_CHANGE_INIT          = _UxGT(MSG_3_LINE("Warte auf den", "Start des", "Filamentwechsels..."));
     PROGMEM Language_Str MSG_FILAMENT_CHANGE_INSERT        = _UxGT(MSG_3_LINE("Filament einlegen", "und Knopf drücken", "um fortzusetzen"));
     PROGMEM Language_Str MSG_FILAMENT_CHANGE_HEAT          = _UxGT(MSG_2_LINE("Knopf drücken um", "Düse aufzuheizen"));
@@ -530,7 +535,7 @@ namespace Language_de {
     PROGMEM Language_Str MSG_FILAMENT_CHANGE_RESUME        = _UxGT(MSG_3_LINE("Warte auf", "Fortsetzen des", "Drucks..."));
   #else // LCD_HEIGHT < 4
     PROGMEM Language_Str MSG_ADVANCED_PAUSE_WAITING        = _UxGT(MSG_1_LINE("Klick zum Fortsetzen"));
-    PROGMEM Language_Str MSG_PAUSE_PRINT_INIT              = _UxGT(MSG_1_LINE("Pausiert..."));
+    PROGMEM Language_Str MSG_PAUSE_PRINT_PARKING           = _UxGT(MSG_1_LINE("Pausiert..."));
     PROGMEM Language_Str MSG_FILAMENT_CHANGE_INIT          = _UxGT(MSG_1_LINE("Bitte warten..."));
     PROGMEM Language_Str MSG_FILAMENT_CHANGE_INSERT        = _UxGT(MSG_1_LINE("Laden und Klick"));
     PROGMEM Language_Str MSG_FILAMENT_CHANGE_HEAT          = _UxGT(MSG_1_LINE("Klick zum Heizen"));

@@ -448,10 +448,10 @@ void MarlinUI::draw_status_screen() {
         #endif
       }
 
+      constexpr bool can_show_days = DISABLED(DOGM_SD_PERCENT) || ENABLED(ROTATE_PROGRESS_DISPLAY);
       if (ev != lastElapsed) {
         lastElapsed = ev;
-        const bool has_days = (elapsed.value >= 60*60*24L);
-        const uint8_t len = elapsed.toDigital(elapsed_string, has_days);
+        const uint8_t len = elapsed.toDigital(elapsed_string, can_show_days && elapsed.value >= 60*60*24L);
         elapsed_x_pos = _SD_INFO_X(len);
 
         #if ENABLED(SHOW_REMAINING_TIME)
@@ -468,8 +468,7 @@ void MarlinUI::draw_status_screen() {
             }
             else {
               duration_t estimation = timeval;
-              const bool has_days = (estimation.value >= 60*60*24L);
-              const uint8_t len = estimation.toDigital(estimation_string, has_days);
+              const uint8_t len = estimation.toDigital(estimation_string, can_show_days && estimation.value >= 60*60*24L);
               estimation_x_pos = _SD_INFO_X(len
                 #if !BOTH(DOGM_SD_PERCENT, ROTATE_PROGRESS_DISPLAY)
                   + 1
@@ -571,8 +570,12 @@ void MarlinUI::draw_status_screen() {
     // Laser / Spindle
     #if DO_DRAW_CUTTER
       if (cutter.power && PAGE_CONTAINS(STATUS_CUTTER_TEXT_Y - INFO_FONT_ASCENT, STATUS_CUTTER_TEXT_Y - 1)) {
-        lcd_put_u8str(STATUS_CUTTER_TEXT_X, STATUS_CUTTER_TEXT_Y, i16tostr3rj(cutter.powerPercent(cutter.power)));
-        lcd_put_wchar('%');
+        lcd_put_u8str(STATUS_CUTTER_TEXT_X, STATUS_CUTTER_TEXT_Y, i16tostr3rj(cutter.power));
+        #if CUTTER_DISPLAY_IS(PERCENT)
+          lcd_put_wchar('%');
+        #elif CUTTER_DISPLAY_IS(RPM)
+          lcd_put_wchar('K');
+        #endif
       }
     #endif
 

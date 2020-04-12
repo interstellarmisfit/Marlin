@@ -76,9 +76,6 @@ int32_t      MenuEditItemBase::minEditValue,
 screenFunc_t MenuEditItemBase::callbackFunc;
 bool         MenuEditItemBase::liveEdit;
 
-// Prevent recursion into screen handlers
-bool no_reentry = false;
-
 ////////////////////////////////////////////
 //////// Menu Navigation & History /////////
 ////////////////////////////////////////////
@@ -193,7 +190,7 @@ DEFINE_MENU_EDIT_ITEM(uint16_3);    // 123        right-justified
 DEFINE_MENU_EDIT_ITEM(uint16_4);    // 1234       right-justified
 DEFINE_MENU_EDIT_ITEM(uint16_5);    // 12345      right-justified
 DEFINE_MENU_EDIT_ITEM(float3);      // 123        right-justified
-DEFINE_MENU_EDIT_ITEM(float52);     // _2.34, 12.34, -2.34 or 123.45, -23.45
+DEFINE_MENU_EDIT_ITEM(float42_52);  // _2.34, 12.34, -2.34 or 123.45, -23.45
 DEFINE_MENU_EDIT_ITEM(float43);     // 1.234
 DEFINE_MENU_EDIT_ITEM(float5);      // 12345      right-justified
 DEFINE_MENU_EDIT_ITEM(float5_25);   // 12345      right-justified (25 increment)
@@ -314,29 +311,18 @@ void MarlinUI::goto_screen(screenFunc_t screen, const uint16_t encoder/*=0*/, co
 ////////////////////////////////////////////
 
 //
-// Display the synchronize screen until moves are
-// finished, and don't return to the caller until
-// done. ** This blocks the command queue! **
+// Display a "synchronize" screen with a custom message until
+// all moves are finished. Go back to calling screen when done.
 //
-static PGM_P sync_message;
-
-void MarlinUI::_synchronize() {
-  if (should_draw()) MenuItem_static::draw(LCD_HEIGHT >= 4, sync_message);
-  if (no_reentry) return;
-  // Make this the current handler till all moves are done
-  const screenFunc_t old_screen = currentScreen;
-  goto_screen(_synchronize);
-  no_reentry = true;
-  planner.synchronize(); // idle() is called until moves complete
-  no_reentry = false;
-  goto_screen(old_screen);
-}
-
-// Display the synchronize screen with a custom message
-// ** This blocks the command queue! **
 void MarlinUI::synchronize(PGM_P const msg/*=nullptr*/) {
-  sync_message = msg ?: GET_TEXT(MSG_MOVING);
-  _synchronize();
+  static PGM_P sync_message = msg ?: GET_TEXT(MSG_MOVING);
+  save_previous_screen();
+  goto_screen([]{
+    if (should_draw()) MenuItem_static::draw(LCD_HEIGHT >= 4, sync_message);
+  });
+  defer_status_screen();
+  planner.synchronize(); // idle() is called until moves complete
+  goto_previous_screen_no_defer();
 }
 
 /**
@@ -428,7 +414,7 @@ void scroll_screen(const uint8_t limit, const bool is_menu) {
           MenuEditItemBase::draw_edit_screen(GET_TEXT(MSG_HOTEND_OFFSET_Z), ftostr54sign(hotend_offset[active_extruder].z));
       #endif
       if (do_probe) {
-        MenuEditItemBase::draw_edit_screen(GET_TEXT(MSG_ZPROBE_ZOFFSET), ftostr52sign(probe.offset.z));
+        MenuEditItemBase::draw_edit_screen(GET_TEXT(MSG_ZPROBE_ZOFFSET), BABYSTEP_TO_STR(probe.offset.z));
         #if ENABLED(BABYSTEP_ZPROBE_GFX_OVERLAY)
           _lcd_zoffset_overlay_gfx(probe.offset.z);
         #endif
@@ -437,22 +423,6 @@ void scroll_screen(const uint8_t limit, const bool is_menu) {
   }
 
 #endif // BABYSTEP_ZPROBE_OFFSET
-
-#if ANY(AUTO_BED_LEVELING_UBL, PID_AUTOTUNE_MENU, ADVANCED_PAUSE_FEATURE)
-
-  void lcd_enqueue_one_now(const char * const cmd) {
-    no_reentry = true;
-    queue.enqueue_one_now(cmd);
-    no_reentry = false;
-  }
-
-  void lcd_enqueue_one_now_P(PGM_P const cmd) {
-    no_reentry = true;
-    queue.enqueue_now_P(cmd);
-    no_reentry = false;
-  }
-
-#endif
 
 #if ENABLED(EEPROM_SETTINGS)
   void lcd_store_settings() {
