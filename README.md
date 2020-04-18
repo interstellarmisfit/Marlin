@@ -44,6 +44,13 @@ WARNING!! The fuse values that Creality says to use are wrong. The settings do n
 
 The correct fuse values, that also get burned if you use an Arduino, are: Low=FF, High=DE, Extended=FD.
 
+## HEX Files
+Marlin119-CrealityBlTouch.hex: Basic config for Creality BLTouch. 3x3 probe grid. No S-Curve acceleration
+Marlin119-CrealityBLTouch-wBootLoader.hex: Basic config for Creality BLTouch including the bootloader
+Marlin119-CrealityBlTouch-5x5.hex: Basic config but with a 5x5 probe grid instead of 3x3
+Marlin119-CrealityBlTouch-Scurve.hex: 3x3 probe grid with S-Curve acceleration
+Marlin119-CrealityBlTouch-Scurve-5x5.hex: 5x5 probe grid with S-Curve acceleration
+
 ## Non-Standard configuration options.
 I have added a couple of non-standard configuration options to configuration.h.
 
