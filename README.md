@@ -57,6 +57,8 @@ Marlin119-CrealityBlTouch-Scurve.hex: 3x3 probe grid with S-Curve acceleration
 
 Marlin119-CrealityBlTouch-Scurve-5x5.hex: 5x5 probe grid with S-Curve acceleration
 
+Marlin119-CrealityBlTouch-Scurve-5x5-italian: Italian slim menus, 5x5 probe grid with S-Curve acceleration
+
 ## Non-Standard configuration options.
 I have added a couple of non-standard configuration options to configuration.h.
 
