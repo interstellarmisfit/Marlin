@@ -728,6 +728,14 @@ void Endstops::update() {
     } \
   }while(0)
 
+  // Kill printer if endstop hit
+  #define PROCESS_ENDSTOP_KILL(AXIS,MINMAX) do { \
+    if (TEST_ENDSTOP(_ENDSTOP(AXIS, MINMAX))) { \
+      _ENDSTOP_HIT(AXIS, MINMAX); \
+      kill(); \
+    } \
+  }while(0)
+
   #if ENABLED(X_DUAL_ENDSTOPS)
     #define PROCESS_ENDSTOP_X(MINMAX) PROCESS_DUAL_ENDSTOP(X, MINMAX)
   #else
@@ -803,6 +811,10 @@ void Endstops::update() {
             && !z_probe_enabled
           #endif
         ) PROCESS_ENDSTOP_Z(MIN);
+
+        #if ENABLED(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN) && ENABLED(ZMIN_ENDSTOP_KILL)
+          if (!z_probe_enabled) PROCESS_ENDSTOP_KILL(Z, MIN);
+        #endif
       #endif
 
       // When closing the gap check the enabled probe
