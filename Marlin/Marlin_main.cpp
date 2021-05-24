@@ -5758,7 +5758,6 @@ void home_all_axes() { gcode_G28(true); }
           // and cause compensation movement in Z
           #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
             const float fade_scaling_factor = planner.fade_scaling_factor_for_z(current_position[Z_AXIS]);
-            //fade_scaling_factor ? fade_scaling_factor * bilinear_z_offset(raw) : 0.0
             current_position[Z_AXIS] -= fade_scaling_factor ? fade_scaling_factor * bilinear_z_offset(current_position) : 0.0;
           #else
             current_position[Z_AXIS] -= bilinear_z_offset(current_position);

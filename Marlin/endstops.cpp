@@ -403,7 +403,7 @@ void _O2 Endstops::M119() {
 // Check endstops - Could be called from Temperature ISR!
 void Endstops::update() {
 
-  #if DISABLED(ENDSTOP_NOISE_FILTER)
+  #if DISABLED(ENDSTOP_NOISE_FILTER) && DISABLED(Z_ENDSTOP_ALWAYS)
     if (!abort_enabled()) return;
   #endif
 
@@ -580,6 +580,14 @@ void Endstops::update() {
     } \
   }while(0)
 
+  // Kill printer if endstop hit
+  #define PROCESS_ENDSTOP_KILL(AXIS,MINMAX) do { \
+    if (TEST_ENDSTOP(_ENDSTOP(AXIS, MINMAX))) { \
+      _ENDSTOP_HIT(AXIS, MINMAX); \
+      kill(PSTR(MSG_KILLED)); \
+    } \
+  }while(0)
+
   #if ENABLED(G38_PROBE_TARGET) && PIN_EXISTS(Z_MIN_PROBE) && !(CORE_IS_XY || CORE_IS_XZ)
     // If G38 command is active check Z_MIN_PROBE for ALL movement
     if (G38_move) {
@@ -592,7 +600,49 @@ void Endstops::update() {
     }
   #endif
 
-  // Now, we must signal, after validation, if an endstop limit is pressed or not
+
+    // Now, we must signal, after validation, if an endstop limit is pressed or not
+  if (stepper.axis_is_moving(Z_AXIS)) {
+    if (stepper.motor_direction(Z_AXIS_HEAD)) { // Z -direction. Gantry down, bed up.
+      #if HAS_Z_MIN
+        #if ENABLED(Z_DUAL_ENDSTOPS)
+          PROCESS_DUAL_ENDSTOP(Z, Z2, MIN);
+        #else
+          #if ENABLED(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN) && DISABLED(Z_ENDSTOP_ALWAYS)
+            if (z_probe_enabled) PROCESS_ENDSTOP(Z, MIN);
+          #elif ENABLED(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN) && ENABLED(ZMIN_ENDSTOP_KILL)
+            if (z_probe_enabled) PROCESS_ENDSTOP(Z, MIN);
+            else PROCESS_ENDSTOP_KILL(Z, MIN);
+          #elif ENABLED(Z_MIN_PROBE_ENDSTOP)
+            if (!z_probe_enabled) PROCESS_ENDSTOP(Z, MIN);
+          #else
+            PROCESS_ENDSTOP(Z, MIN);
+          #endif
+        #endif
+      #endif
+
+      // When closing the gap check the enabled probe
+      #if ENABLED(Z_MIN_PROBE_ENDSTOP)
+        if (z_probe_enabled) PROCESS_ENDSTOP(Z, MIN_PROBE);
+      #endif
+    }
+    else { // Z +direction. Gantry up, bed down.
+      #if HAS_Z_MAX
+        #if ENABLED(Z_DUAL_ENDSTOPS)
+          PROCESS_DUAL_ENDSTOP(Z, Z2, MAX);
+        #elif DISABLED(Z_MIN_PROBE_ENDSTOP) || Z_MAX_PIN != Z_MIN_PROBE_PIN
+          // If this pin is not hijacked for the bed probe
+          // then it belongs to the Z endstop
+          PROCESS_ENDSTOP(Z, MAX);
+        #endif
+      #endif
+    }
+  }
+
+  #if ENABLED(Z_ENDSTOP_ALWAYS)
+    if (!abort_enabled()) return;
+  #endif
+
   if (stepper.axis_is_moving(X_AXIS)) {
     if (stepper.motor_direction(X_AXIS_HEAD)) { // -direction
       #if HAS_X_MIN
@@ -635,39 +685,6 @@ void Endstops::update() {
     }
   }
 
-  if (stepper.axis_is_moving(Z_AXIS)) {
-    if (stepper.motor_direction(Z_AXIS_HEAD)) { // Z -direction. Gantry down, bed up.
-      #if HAS_Z_MIN
-        #if ENABLED(Z_DUAL_ENDSTOPS)
-          PROCESS_DUAL_ENDSTOP(Z, Z2, MIN);
-        #else
-          #if ENABLED(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN)
-            if (z_probe_enabled) PROCESS_ENDSTOP(Z, MIN);
-          #elif ENABLED(Z_MIN_PROBE_ENDSTOP)
-            if (!z_probe_enabled) PROCESS_ENDSTOP(Z, MIN);
-          #else
-            PROCESS_ENDSTOP(Z, MIN);
-          #endif
-        #endif
-      #endif
-
-      // When closing the gap check the enabled probe
-      #if ENABLED(Z_MIN_PROBE_ENDSTOP)
-        if (z_probe_enabled) PROCESS_ENDSTOP(Z, MIN_PROBE);
-      #endif
-    }
-    else { // Z +direction. Gantry up, bed down.
-      #if HAS_Z_MAX
-        #if ENABLED(Z_DUAL_ENDSTOPS)
-          PROCESS_DUAL_ENDSTOP(Z, Z2, MAX);
-        #elif DISABLED(Z_MIN_PROBE_ENDSTOP) || Z_MAX_PIN != Z_MIN_PROBE_PIN
-          // If this pin is not hijacked for the bed probe
-          // then it belongs to the Z endstop
-          PROCESS_ENDSTOP(Z, MAX);
-        #endif
-      #endif
-    }
-  }
 } // Endstops::update()
 
 #if ENABLED(PINS_DEBUGGING)

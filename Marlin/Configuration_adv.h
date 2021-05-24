@@ -283,6 +283,10 @@
 // enable this option. Override at any time with M120, M121.
 //#define ENDSTOPS_ALWAYS_ON_DEFAULT
 
+// Always enable the Z Endstop
+#define Z_ENDSTOP_ALWAYS
+#define ZMIN_ENDSTOP_KILL
+
 // @section extras
 
 //#define Z_LATE_ENABLE // Enable Z the last moment. Needed if your Z driver overheats.
